@@ -98,6 +98,15 @@ def generate_metadata(prompt, data):
     ]
     return get_completion(messages)
 
+
+# for generate metadata
+def generate_content(summarise, article_row):
+    full_prompt = summarise + f"```{article_row['article']}```\n"
+    messages = [
+        { "role": "user", "content": full_prompt }
+    ]
+    return get_completion(messages)
+
 # generate metadata prompt
 def metaData(articles):
     # prompt: what happen?
@@ -169,33 +178,28 @@ def metaData(articles):
         # 將 summary_list 轉換為 DataFrame
         summaries_df = pd.DataFrame(summary_list)
         return summaries_df
+        
     else:
         print(f"No data to process.")
         return pd.DataFrame()
 
-    
-
-# for generate metadata
-def generate_content(summarise, article_row):
-    full_prompt = summarise + f"```{article_row['article']}```\n"
-    messages = [
-        { "role": "user", "content": full_prompt }
-    ]
-    return get_completion(messages)
-
 
 # for generate summarise
-def generate_abstract(summarise, meta_row):
-    # 生成摘要的 prompt，基於已經處理好的摘要欄位
-    full_prompt = summarise + f"""
-    事件摘要: {meta_row['whatHappen']}
-    關鍵事件: {meta_row['keyFacts']}
-    立場文: {meta_row['stance']}
-    """
-    
+def generate_morning(summarise, meta_rows):
+    # 收集所有 row 的摘要資料
+    combined_summaries = ""
+
+    for index, row in meta_rows.iterrows():
+        combined_summaries += f"""
+        事件摘要: {row['whatHappen']}
+        關鍵事件: {row['keyFacts']}
+        立場文: {row['stance']}
+        """
+
+    full_prompt = summarise + combined_summaries
+
     messages = [
         { "role": "user", "content": full_prompt }
     ]
     
-    # 呼叫 OpenAI API 並返回最終摘要
     return get_completion(messages)
