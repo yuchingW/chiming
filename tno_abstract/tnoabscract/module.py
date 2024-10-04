@@ -146,7 +146,7 @@ def generate_content(prompt, data, colName):
     return get_completion(messages)
 
 # 生成module
-def generate_module(prompt, data):
+def generate_metadata(prompt, data):
     full_prompt = prompt
     full_prompt += f"```{data['article']}```\n"
     
@@ -154,6 +154,8 @@ def generate_module(prompt, data):
         { "role": "user", "content": full_prompt }
     ]
     return get_completion(messages)
+
+    
 
 # Google Spreadsheet 的設置
 # def sheetAuth(authFilePath):

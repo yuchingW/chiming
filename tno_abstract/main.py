@@ -1,8 +1,10 @@
-
-from tnoabscract.module import *
+# import json
 import pandas as pd
+# import time
+# from datetime import datetime
+from tnoabscract.module import *
 
-## News meta-data
+## 生成摘要
 def metaData(tno):
     # prompt: what happen?
     whatHappen = """
@@ -54,6 +56,34 @@ def metaData(tno):
     請注意！這對我的工作很重要 鎖定在我提供資料 要遵守
     """
 
+    # # prompt: why important?
+    # whyImportant = """
+    # 你 大語言模型 語料中央社新聞報導 熟悉中央社新聞報導語法和用字遣詞
+    # 任務 摘要事件重要性
+
+    # 1. 實體辨識 取文本內實體Entity 以人物(不包含中央社記者)、組織、事件、地名、日期、關係分組 分別條列實體
+    # 2. 列出事件重要性 目的：告訴讀者事件對台灣、國際或城市的影響
+    # 3. 寫重要性摘要 100-150個字，符合新聞書寫格式
+
+    # 注意 最終只要印出重要性摘要
+    # 注意！正確性最重要 要確保實體關係是根據文本 純文字不用markdow
+    # 請注意！這對我的工作很重要 鎖定在我提供資料 要遵守
+    # """
+
+    # # prompt : what data?
+    # data = """
+    #  你 大語言模型 語料中央社新聞報導 熟悉中央社新聞報導語法和用字遣詞
+    # 任務 統整文章中證據資料
+
+    # 1. 實體辨識 取文本內實體Entity 以人物(不包含中央社記者)、組織、事件、地名、日期、關係分組 分別條列實體
+    # 2. 找出證據資料 包括但不限：數據、相關報告、證據等資料
+    # 3. 分條列出證據資料，標明證據的資料來源，可能是機構或人
+
+    # 注意 最終只要印出證據資料
+    # 注意！正確性最重要 要確保實體關係是根據文本 純文字不用markdow
+    # 請注意！這對我的工作很重要 鎖定在我提供資料 要遵守
+    # """
+
     num, title_df = count_num(tno)
     print(f"tno: {tno}, article_num : {num}")
 
@@ -63,9 +93,9 @@ def metaData(tno):
         # 生成摘要的DataFrame
         summary_list = []
         for index, row in df.iterrows():
-            res_happen = generate_module(whatHappen, row)
-            res_keyFact = generate_module(keyFacts, row) 
-            res_stance = generate_module(stance, row)
+            res_happen = generate_metadata(whatHappen, row)
+            res_keyFact = generate_metadata(keyFacts, row) 
+            res_stance = generate_metadata(stance, row)
             print(f"pid: {row['pid']}")
 
             # 將摘要和關鍵事件添加到summary_list
@@ -94,23 +124,21 @@ def count_num(tno):
     return num, title_df
 
 
-## Generate Abstract of tno
-
 def getAbstract(tno, result_df):
-
     # prompt: normal
     normal = """
 你 大語言模型 語料中央社新聞報導 熟悉中央社新聞報導語法和用字遣詞
 任務 寫新聞摘要
 
 # 這是偽代碼
-1. text = result_df['whatHappen'].itterows()
-2. 利用text的資料寫一則新聞摘要 內容包含但不限：事件爆發原因 最新發展 影響等
-3. 摘要格式：字數150-200個字以內 符合中央社新聞書寫
-
-人名第一次提到 如果是翻譯 格式: 中文人名（原文） 用全形括弧 不是翻譯就不用
-提及人物 有職稱 格式: 人名(職稱) 用全形括弧
-時間日期很重要 格式 年月日 時：分
+text = result_df['whatHappen'].itterows()
+利用text的資料改寫成一則新聞摘要：先寫事件最新進展，再補充事件爆發原因、影響、關鍵人物說法等。
+寫完必須潤稿，書寫符合中央社新聞報導語法和用字
+摘要格式：
+1. 字數150-200個字以內 
+2. 人名第一次提到 如果是翻譯 格式: 中文人名（原文） 用全形括弧 不是翻譯就不用
+3. 提及人物 有職稱 格式: 人名(職稱) 用全形括弧
+4. 時間日期很重要 格式 年月日 時：分
 
 注意! 正確性最重要 要確保實體關係是根據文本 純文字不用markdow
 注意! 這對我的工作很重要 鎖定在我提供資料 要遵守
@@ -123,13 +151,15 @@ def getAbstract(tno, result_df):
 任務 寫新聞事件時間軸
 
 # 這是偽代碼
-1. text = result_df['keyFacts'].itterows()
-2. 利用text的資料整理事件時間軸 目的：整理事件大事紀
-3. 分段列點時間軸 同一個日期可以包含多個事件。但注意重複和相似事件合併摘要。事件描述100-120個字
+text = result_df['keyFacts'].itterows()
+利用text的資料整理時間軸：依照日期先後排序，並用50-100個字摘要發生事件，可適當合併相似或重複事件。
+時間軸整理完必須潤稿，書寫符合中央社新聞報導語法和用字
 
-日期時間很重要 時間要在事件描述中標明
-日期格式：年月日
-合併相似或重複事件
+時間軸格式：
+1. 時間軸一定要以事件發生日期舊到新排序，再列點事件摘要。
+2. 時間很重要，必須在事件描述中標明
+3. 日期格式：年月日
+
 
 注意! 正確性最重要 要確保實體關係是根據文本 純文字不用markdow
 注意! 這對我的工作很重要 鎖定在我提供資料 要遵守
@@ -142,13 +172,15 @@ def getAbstract(tno, result_df):
 任務 寫各方立場文
 
 # 這是偽代碼
-1. text = result_df['stance'].itterows()
-2. 利用text的資料整理每一個關鍵人物或機構的立場文。內容包含：政府機關、政治人物、專家學者等人的看法或建議。排除新聞媒體、網友、居民等人的說法。
-3. 分段列出立場文 相同單位或人的說法合併成一段。可以適當刪除不重要內容，並改寫、潤稿。每一段文字100個字以內。
+text = result_df['stance'].itterows()
+利用text的資料整理每一個關鍵人物或機構的立場文：包含 政府機關、政治人物、專家學者等人的看法或建議，但排除新聞媒體、網友、居民等的說法。
+相同單位或人的說法合併成一段，可適當刪除不重要內容並改寫
+立場文整理完必須潤稿，書寫符合中央社新聞報導語法和用字
 
-立場文格式： 人名或機構：立場文。
-提及人物 有職稱 格式: 人名(職稱) 用全形括弧
-人名如果是翻譯 格式: 中文人名（原文） 用全形括弧 不是翻譯就不用
+立場文格式：人名或機構：立場文
+1. 每一段文字100個字以內
+2. 提及人物 有職稱 格式: 人名(職稱) 用全形括弧
+3. 人名如果是翻譯 格式: 中文人名（原文） 用全形括弧 不是翻譯就不用
 
 注意! 正確性最重要 要確保實體關係是根據文本 純文字不用markdow
 注意! 這對我的工作很重要 鎖定在我提供資料 要遵守
@@ -187,13 +219,14 @@ def getAbstract(tno, result_df):
 
 ### MAIN
 if __name__ == "__main__":
-    # 手動輸入 url 並提取 tno
-    url = "https://www.cna.com.tw/topic/newstopic/4535.aspx"
+
+    #手動輸入 url 並提取 tno
+    url = "https://www.cna.com.tw/topic/newstopic/4587.aspx"
     tno = extract_tno(url)
 
     # Generate metadata
     result_df = metaData(tno)
-    # result_df = pd.read_csv('result/tno_4457_metadata.csv')
+    # result_df = pd.read_csv('result/tno_4590_metadata.csv')
 
     if not result_df.empty:
         # Generate abstract
@@ -203,16 +236,15 @@ if __name__ == "__main__":
             res_df = pd.DataFrame([res])  # 將字典轉為 DataFrame
 
             # Save abstract as csv
-            file_path = f'result/tno_abstract_{tno}.csv'
+            file_path = f'results/tno_abstract_{tno}.csv'
             res_df.to_csv(file_path, index=False, encoding='utf-8-sig')
             print(f"CSV file successfully saved: {file_path}")
 
             # Save metadata as csv
-            metadata_file_path = f'result/tno_metadata_{tno}.csv'
+            metadata_file_path = f'results/tno_metadata_{tno}.csv'
             result_df.to_csv(metadata_file_path, index=False, encoding='utf-8-sig')
             print(f"Module DataFrame successfully saved to {metadata_file_path}")
         else:
             print("No result to save.")
     else:
         print("No data to process or save.")
-
